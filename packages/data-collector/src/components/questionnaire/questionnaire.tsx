@@ -11,7 +11,6 @@ import {
     isPropsUIQuestionMultipleChoiceCheckbox,
     isPropsUIQuestionOpen,
 } from "./types"
-
 import { MultipleChoiceQuestion } from './multiple_choice_question'
 import { MultipleChoiceQuestionCheckbox } from './multiple_choice_question_checkbox'
 import { OpenQuestion } from './open_question'
@@ -21,17 +20,12 @@ type Props = PropsUIPromptQuestionnaire & ReactFactoryContext
 export const Questionnaire = (props: Props): JSX.Element => {
   const { questions, description, questionToChatgpt, answerFromChatgpt, resolve, locale } = props
   const [answers, setAnswers] = React.useState<{}>({});
+  const topRef = React.useRef<HTMLDivElement>(null);
   const copy = prepareCopy(locale)
 
-    
   React.useEffect(() => {
-    // check if running in an iframe
-    if (window.frameElement) {
-      window.parent.scrollTo(0,0)
-    } else {
-      window.scrollTo(0,0)
-    }
-  }, [props])
+    topRef.current?.scrollIntoView({ behavior: "instant", block: "start" });
+  }, [props]);
 
   function handleDonate (): void {
     const toStore = {
@@ -72,7 +66,7 @@ export const Questionnaire = (props: Props): JSX.Element => {
   }
 
   return (
-    <div>
+    <div ref={topRef}>
       <div className='flex-wrap text-bodylarge font-body text-grey1 text-left'>
         {copy.description}
       </div>
@@ -88,7 +82,6 @@ export const Questionnaire = (props: Props): JSX.Element => {
             ))}
         </div>
       </div>
-
       <div className='bg-successlight rounded-lg shadow-md p-6 mt-4 mb-4'>
         <h3 className='text-lg font-semibold mb-2'>
             {copy.answerChatgptLabel}
@@ -110,7 +103,6 @@ export const Questionnaire = (props: Props): JSX.Element => {
     </div>
   );
 
-        
   function prepareCopy (locale: string): Copy {
     return {
       description: Translator.translate(description, locale),
@@ -121,7 +113,6 @@ export const Questionnaire = (props: Props): JSX.Element => {
   }
 };
 
-
 interface Copy {
   description: string
   continueLabel: string
@@ -129,18 +120,14 @@ interface Copy {
   answerChatgptLabel: string
 }
 
-
 const continueLabel = new TextBundle()
   .add('en', 'Continue')
   .add('nl', 'Verder')
-
 
 const questionChatgptLabel = new TextBundle()
   .add('en', 'Your question to ChatGPT')
   .add('nl', 'Uw vraag aan ChatGPT')
 
-
 const answerChatgptLabel = new TextBundle()
   .add('en', 'The answer from ChatGPT')
   .add('nl', 'Het antwoord van ChatGPT')
-
