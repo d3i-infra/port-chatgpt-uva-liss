@@ -32,7 +32,9 @@ export default class FakeBridge implements Bridge {
 
       if (!response.ok) {
         console.error(`[FakeBridge] Data submission failed with status: ${response.status}`);
-        return { success: false, key: command.key, status: response.status, error: `HTTP ${response.status}` }
+        // ALWAYS RETURN TRUE IN CASE OF FAKE BRIDGE
+        // IT DOES NOT MAKE SENSE TO RETURN FALSE
+        return { success: true, key: command.key, status: response.status, error: `HTTP ${response.status}` }
       } else {
         console.log(`[FakeBridge] Data submission succeeded with status: ${response.status}`);
         return { success: true, key: command.key, status: response.status }

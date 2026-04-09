@@ -360,6 +360,7 @@ def handle_donate_result(result) -> bool:
 
     if result_type == "PayloadResponse":
         # value is { success: bool, key: str, status: int, error?: str }
+        print("I SHOULD FIRE HERE")
         return bool(result.value.success)
 
     if result_type == "PayloadVoid":

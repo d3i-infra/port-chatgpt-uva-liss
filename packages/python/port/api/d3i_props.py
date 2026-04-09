@@ -153,6 +153,42 @@ class PropsUIPromptFileInputMultiple:
         return dict
 
 
+
+@dataclass
+class PropsUIPromptRetry:
+    """Retry submitting a file page
+
+    Prompt the user if they want to submit a new file.
+    This can be used in case a file could not be processed.
+
+    Attributes:
+        text: message to display
+        ok: message to display if the user wants to try again
+    """
+
+    text: props.Translatable
+    ok: props.Translatable
+
+    def toDict(self):
+        dict = {}
+        dict["__type__"] = "PropsUIPromptRetry"
+        dict["text"] = self.text.toDict()
+        dict["ok"] = self.ok.toDict()
+        return dict
+
+
+@dataclass
+class ExtractionResult:
+    """Result of a platform extraction: tables for consent + aggregated error counts.
+
+    The errors Counter contains type-name keys (e.g. Counter({"FileNotFoundInZipError": 3})).
+    These counts are safe to forward via the bridge logger. Raw exception messages
+    are never included — they stay in local __name__ logger output only.
+    """
+    tables: list[PropsUIPromptConsentFormTableViz]
+    errors: Counter = field(default_factory=Counter)
+
+
 @dataclass
 class PropsUIQuestionOpen:
     """
@@ -218,7 +254,7 @@ class PropsUIQuestionMultipleChoice:
         question (Translatable): The question text.
         choices (list[Translatable]): List of choices.
     """
-    id: int
+    id: str
     question: props.Translatable
     choices: list[props.Translatable]
 
@@ -253,6 +289,8 @@ class PropsUIPromptQuestionnaire:
         PropsUIQuestionMultipleChoiceCheckbox | 
         PropsUIQuestionOpen
     ]
+    questionToChatgpt: str
+    answerFromChatgpt: str
 
     def toDict(self):
         """
@@ -265,39 +303,8 @@ class PropsUIPromptQuestionnaire:
         dict["__type__"] = "PropsUIPromptQuestionnaire"
         dict["description"] = self.description.toDict()
         dict["questions"] = [q.toDict() for q in self.questions]
+        dict["questionToChatgpt"] = self.questionToChatgpt
+        dict["answerFromChatgpt"] = self.answerFromChatgpt
         return dict
 
 
-@dataclass
-class PropsUIPromptRetry:
-    """Retry submitting a file page
-
-    Prompt the user if they want to submit a new file.
-    This can be used in case a file could not be processed.
-
-    Attributes:
-        text: message to display
-        ok: message to display if the user wants to try again
-    """
-
-    text: props.Translatable
-    ok: props.Translatable
-
-    def toDict(self):
-        dict = {}
-        dict["__type__"] = "PropsUIPromptRetry"
-        dict["text"] = self.text.toDict()
-        dict["ok"] = self.ok.toDict()
-        return dict
-
-
-@dataclass
-class ExtractionResult:
-    """Result of a platform extraction: tables for consent + aggregated error counts.
-
-    The errors Counter contains type-name keys (e.g. Counter({"FileNotFoundInZipError": 3})).
-    These counts are safe to forward via the bridge logger. Raw exception messages
-    are never included — they stay in local __name__ logger output only.
-    """
-    tables: list[PropsUIPromptConsentFormTableViz]
-    errors: Counter = field(default_factory=Counter)

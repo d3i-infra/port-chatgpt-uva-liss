@@ -15,6 +15,8 @@ import port.helpers.port_helpers as ph
 import port.helpers.validate as validate
 import port.helpers.uploads as uploads
 
+import port.platforms.chatgpt as chatgpt
+
 logger = logging.getLogger(__name__)
 
 
@@ -159,6 +161,25 @@ class FlowBuilder:
             yield from ph.emit_log("info", f"[{self.platform_name}] Donation result: failed")
             _ = yield ph.render_donate_failure_page(self.platform_name)
             return
+        else:
+            # render questionnaire
+            # modified including three questions and answers rather than just a random one
+            donated_data = json.loads(reviewed_data)[0]["chatgpt_conversations"]
+            print(donated_data)
+            if len(donated_data) > 0:
+                questions_and_answers = chatgpt.select_three_qas(donated_data)
+                for index, (question, answer) in enumerate(questions_and_answers, start=1):
+                    if question and answer:
+                        questionnaire_results = yield ph.render_page(
+                            props.Translatable({"en": "", "nl": ""}), 
+                            chatgpt.generate_questionnaire(question, answer, index)
+                        )
+                        
+                        if questionnaire_results.__type__ == "PayloadJSON":
+                            yield ph.donate(
+                                f"{self.session_id}-questionnaire-{index}-donation", 
+                                questionnaire_results.value
+                            )
 
         yield from ph.emit_log("info", f"[{self.platform_name}] Donation result: success")
 
