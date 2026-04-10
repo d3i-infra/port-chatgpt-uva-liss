@@ -3,7 +3,6 @@
 FlowBuilder now yields CommandSystemLog milestones between UI commands.
 Tests use consume_logs() to skip past log commands to the next UI/donate command.
 """
-import json
 import sys
 from collections import Counter
 from unittest.mock import MagicMock, patch
