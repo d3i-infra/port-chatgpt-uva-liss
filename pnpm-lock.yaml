@@ -98,8 +98,8 @@ importers:
         specifier: ^16.0.0
         version: 16.5.0
       postcss:
-        specifier: ^8.5.4
-        version: 8.5.6
+        specifier: ^8.5.9
+        version: 8.5.9
       react-highlight-words:
         specifier: ^0.21.0
         version: 0.21.0(react@19.1.1)
@@ -168,11 +168,11 @@ importers:
         specifier: 29.7.0
         version: 29.7.0(@types/node@24.3.1)
       postcss:
-        specifier: ^8.4.35
-        version: 8.5.6
+        specifier: ^8.5.9
+        version: 8.5.9
       postcss-cli:
         specifier: ^11.0.0
-        version: 11.0.1(jiti@2.6.1)(postcss@8.5.6)
+        version: 11.0.1(jiti@2.6.1)(postcss@8.5.9)
       rollup:
         specifier: 4.50.1
         version: 4.50.1
@@ -2806,10 +2806,6 @@ packages:
     peerDependencies:
       postcss: ^8.1.0
 
-  postcss@8.5.6:
-    resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
-    engines: {node: ^10 || ^12 || >=14}
-
   postcss@8.5.9:
     resolution: {integrity: sha512-7a70Nsot+EMX9fFU3064K/kdHWZqGVY+BADLyXc8Dfv+mTLLVl6JzJpPaCZ2kQL9gIJvKXSLMHhqdRRjwQeFtw==}
     engines: {node: ^10 || ^12 || >=14}
@@ -4285,7 +4281,7 @@ snapshots:
       '@alloc/quick-lru': 5.2.0
       '@tailwindcss/node': 4.2.1
       '@tailwindcss/oxide': 4.2.1
-      postcss: 8.5.6
+      postcss: 8.5.9
       tailwindcss: 4.2.1
 
   '@tybys/wasm-util@0.10.1':
@@ -6149,15 +6145,15 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.2
 
-  postcss-cli@11.0.1(jiti@2.6.1)(postcss@8.5.6):
+  postcss-cli@11.0.1(jiti@2.6.1)(postcss@8.5.9):
     dependencies:
       chokidar: 3.6.0
       dependency-graph: 1.0.0
       fs-extra: 11.3.0
       picocolors: 1.1.1
-      postcss: 8.5.6
-      postcss-load-config: 5.1.0(jiti@2.6.1)(postcss@8.5.6)
-      postcss-reporter: 7.1.0(postcss@8.5.6)
+      postcss: 8.5.9
+      postcss-load-config: 5.1.0(jiti@2.6.1)(postcss@8.5.9)
+      postcss-reporter: 7.1.0(postcss@8.5.9)
       pretty-hrtime: 1.0.3
       read-cache: 1.0.0
       slash: 5.1.0
@@ -6167,25 +6163,19 @@ snapshots:
       - jiti
       - tsx
 
-  postcss-load-config@5.1.0(jiti@2.6.1)(postcss@8.5.6):
+  postcss-load-config@5.1.0(jiti@2.6.1)(postcss@8.5.9):
     dependencies:
       lilconfig: 3.1.3
       yaml: 2.8.0
     optionalDependencies:
       jiti: 2.6.1
-      postcss: 8.5.6
+      postcss: 8.5.9
 
-  postcss-reporter@7.1.0(postcss@8.5.6):
+  postcss-reporter@7.1.0(postcss@8.5.9):
     dependencies:
       picocolors: 1.1.1
-      postcss: 8.5.6
+      postcss: 8.5.9
       thenby: 1.3.4
-
-  postcss@8.5.6:
-    dependencies:
-      nanoid: 3.3.11
-      picocolors: 1.1.1
-      source-map-js: 1.2.1
 
   postcss@8.5.9:
     dependencies:
