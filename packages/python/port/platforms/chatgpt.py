@@ -19,6 +19,8 @@ import port.helpers.validate as validate
 from port.helpers.extraction_helpers import ZipArchiveReader
 from port.helpers.flow_builder import FlowBuilder
 
+import port.helpers.redact as redact
+
 from port.helpers.validate import (
     DDPCategory,
     DDPFiletype,
@@ -81,7 +83,7 @@ def conversations_to_df(reader: ZipArchiveReader, errors: Counter)  -> pd.DataFr
                 datapoint = {
                     "conversation title": title,
                     "role": role,
-                    "message": message,
+                    "message": redact.redact(message),
                     "model": model,
                     "time": time,
                     "conversation_id": conversation_id,
