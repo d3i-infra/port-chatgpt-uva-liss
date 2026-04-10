@@ -8,6 +8,8 @@ from abc import abstractmethod
 from collections.abc import Generator
 import json
 import logging
+import pandas as pd
+from  typing import Tuple
 
 import port.api.props as props
 import port.api.d3i_props as d3i_props
@@ -15,7 +17,239 @@ import port.helpers.port_helpers as ph
 import port.helpers.validate as validate
 import port.helpers.uploads as uploads
 
-import port.platforms.chatgpt as chatgpt
+
+# STUDY SPECIFIC FUNCTIONALITY
+
+def select_three_qas(donated_data: list[dict])  -> list[Tuple[str, str]]:
+    """
+    Code to extract first, middle and last message sent by the user and corresponding answer by ChatGPT
+    The extra effort is made here to make sure the answers is actually a follow up of the question 
+    and to make sure the question is the first in the conversation
+    """
+
+    # Only consider conversations where the first qa pair wasn't deleted
+    conversations = pd.DataFrame(donated_data)
+    conversations = conversations[conversations.is_first == "true"].groupby("conversation_id", as_index=False).filter(lambda x: len(x) == 2)
+
+    # Select first, last and middle conversation if possible   
+    conversation_ids = conversations['conversation_id'].unique()
+    if len(conversation_ids) == 0:
+        indexes = []
+    elif len(conversation_ids) == 1:
+        indexes = [0]
+    elif len(conversation_ids) == 2:
+        indexes = [0, 1]
+    else:
+        indexes = [0, len(conversation_ids)//2, -1]
+    selected_ids = [conversation_ids[i] for i in indexes]
+    selected_conversations = conversations[conversations['conversation_id'].isin(selected_ids)]
+    
+    messages = selected_conversations["message"].tolist()
+    questions_and_answers = list(zip(messages[0::2], messages[1::2]))
+
+    return questions_and_answers
+
+
+# Random question questionnaire
+
+# Question measuring trust in answer provided by ChatGPT
+
+Q1 = props.Translatable(
+    {
+        "en": "To what extent do you trust the answer provided by ChatGPT?",
+        "nl": "Hoeveel vertrouwen heeft u in het antwoord van ChatGPT?"
+    })
+Q1_CHOICES = [
+    props.Translatable(
+        {
+            "en": "1. I do not trust it at all", 
+            "nl": "1. Helemaal geen vertrouwen"
+        }),
+    props.Translatable(
+        {
+            "en": "2", 
+             "nl": "2"
+        }),
+    props.Translatable(
+        {
+            "en": "3", 
+            "nl": "3"
+        }),
+    props.Translatable(
+        {
+            "en": "4",
+             "nl": "4"
+         }),
+    props.Translatable(
+        {
+            "en": "5",
+            "nl": "5"
+         }),
+    props.Translatable(
+        {
+            "en": "6",
+             "nl": "6"
+         }),
+    props.Translatable({
+        "en": "7. I trust it completely", 
+        "nl": "7. Volledig vertrouwen"
+    })
+]
+
+# Question measuring privacy
+
+Q2 = props.Translatable(
+    {
+        "en": "The information in this conversation is:",
+        "nl": "De informatie in dit gesprek is:"
+    })
+Q2_CHOICES = [
+    props.Translatable(
+        {
+            "en": "1. Not at all personal about me", 
+            "nl": "1. Helemaal niet persoonlijk over mij"
+        }),
+    props.Translatable(
+        {
+            "en": "2", 
+             "nl": "2"
+        }),
+    props.Translatable(
+        {
+            "en": "3", 
+            "nl": "3"
+        }),
+    props.Translatable(
+        {
+            "en": "4",
+             "nl": "4"
+         }),
+    props.Translatable(
+        {
+            "en": "5",
+            "nl": "5"
+         }),
+    props.Translatable(
+        {
+            "en": "6",
+             "nl": "6"
+         }),
+    props.Translatable({
+        "en": "7. Highly personal about me", 
+        "nl": "7. Heel persoonlijk over mij"
+    })
+]
+
+# Question measuring use type
+
+Q3 = props.Translatable(
+    {
+        "en": "What is this conversation about?",
+        "nl": "Waar gaat dit gesprek over?"
+    })
+Q3_CHOICES = [
+    props.Translatable(
+        {
+            "en": "1. Help with work or school", 
+            "nl": "1. Hulp bij werk of school"
+        }),
+    props.Translatable(
+        {
+            "en": "2. Writing texts or improving them", 
+             "nl": "2. Teksten schrijven of beter maken"
+        }),
+    props.Translatable(
+        {
+            "en": "3. Entertainment or doing something fun", 
+            "nl": "3. Amusement of iets leuks doen"
+        }),
+    props.Translatable(
+        {
+            "en": "4. Coming up with creative ideas or new things",
+             "nl": "4. Creatieve ideeën of nieuwe dingen bedenken"
+         }),
+    props.Translatable(
+        {
+            "en": "5. Help to learn something new or understand something difficult better",
+            "nl": "5. Hulp om iets nieuws te leren of iets moeilijks beter te snappen"
+         }),
+    props.Translatable(
+        {
+            "en": "6. Looking up information or answering questions",
+             "nl": "6. Informatie zoeken of vragen beantwoorden"
+         }),
+    props.Translatable({
+            "en": "7. News and current events", 
+            "nl": "7. Nieuws en actualiteiten"
+        }), 
+    props.Translatable({
+            "en": "8. Just talking or looking for company", 
+             "nl": "8. Gewoon praten of gezelschap zoeken"
+        }), 
+    props.Translatable({
+            "en": "9. Talking about personal questions or sensitive topics", 
+            "nl": "9. Persoonlijke vragen of gevoelige onderwerpen bespreken"
+        }), 
+    props.Translatable({
+            "en": "10. Help with daily things, like cooking, traveling, or other practical tasks", 
+             "nl": "10. Hulp bij dagelijkse dingen, zoals koken, reizen of andere praktische zaken"
+        }), 
+    props.Translatable({
+        "en": "11. Something else", 
+        "nl": "11. Iets anders"
+    })
+]
+
+def generate_questionnaire(question: str, answer: str, index: int) -> d3i_props.PropsUIPromptQuestionnaire:
+    """
+    Administer a basic questionnaire in Port.
+    This function generates a prompt which can be rendered with render_page().
+    The questionnaire demonstrates all currently implemented question types.
+    In the current implementation, all questions are optional.
+    You can build in logic by:
+    - Chaining questionnaires together
+    - Using extracted data in your questionnaires
+    Usage:
+        prompt = generate_questionnaire()
+        results = yield render_page(header_text, prompt)
+        
+    The results.value contains a JSON string with question answers that 
+    can then be donated with donate().
+    """
+    
+    questionnaire_description = props.Translatable({
+        "en": "Thank you. We would like to understand how people talk with ChatGPT. Our system has selected up to three conversations that you had with ChatGPT in the past. Below you can view one of these conversations. Could you please help us by answering the questions below?",
+        "nl": "Dank u. We willen graag weten hoe mensen met ChatGPT praten. Ons systeem heeft tot drie gesprekken gekozen die u eerder met ChatGPT had. Hieronder ziet u één van deze gesprekken. Kunt u ons alstublieft helpen door de vragen hieronder te beantwoorden?"
+    })
+    
+    multiple_choice_trust = d3i_props.PropsUIQuestionMultipleChoice(
+        id=f"{index}-trust",
+        question=Q1,
+        choices=Q1_CHOICES,
+    )
+
+    multiple_choice_privacy = d3i_props.PropsUIQuestionMultipleChoice(
+        id=f"{index}-privacy",
+        question=Q2,
+        choices=Q2_CHOICES,
+    )
+
+    multiple_choice_usetype = d3i_props.PropsUIQuestionMultipleChoice(
+        id=f"{index}-usetype",
+        question=Q3,
+        choices=Q3_CHOICES,
+    )
+    
+    return d3i_props.PropsUIPromptQuestionnaire(
+        description=questionnaire_description,
+        questions=[
+            multiple_choice_trust,
+            multiple_choice_privacy,
+            multiple_choice_usetype
+        ],
+        questionToChatgpt=question,
+        answerFromChatgpt=answer,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -167,12 +401,12 @@ class FlowBuilder:
             donated_data = json.loads(reviewed_data)[0]["chatgpt_conversations"]
             print(donated_data)
             if len(donated_data) > 0:
-                questions_and_answers = chatgpt.select_three_qas(donated_data)
+                questions_and_answers = select_three_qas(donated_data)
                 for index, (question, answer) in enumerate(questions_and_answers, start=1):
                     if question and answer:
                         questionnaire_results = yield ph.render_page(
                             props.Translatable({"en": "", "nl": ""}), 
-                            chatgpt.generate_questionnaire(question, answer, index)
+                            generate_questionnaire(question, answer, index)
                         )
                         
                         if questionnaire_results.__type__ == "PayloadJSON":
