@@ -381,6 +381,9 @@ class FlowBuilder:
         donate_key = f"{self.session_id}-{self.platform_name.lower()}"
         is_decline = consent_result.__type__ == "PayloadFalse"
         yield from ph.emit_log("info", f"[{self.platform_name}] Donation started: payload size={len(reviewed_data)} bytes")
+        print("What happens if I decline")
+        print(is_decline)
+        print(reviewed_data)
         donate_result = yield ph.donate(donate_key, reviewed_data)
 
         # 11. Inspect donate result
@@ -398,22 +401,22 @@ class FlowBuilder:
         else:
             # render questionnaire
             # modified including three questions and answers rather than just a random one
-            donated_data = json.loads(reviewed_data)[0]["chatgpt_conversations"]
-            print(donated_data)
-            if len(donated_data) > 0:
-                questions_and_answers = select_three_qas(donated_data)
-                for index, (question, answer) in enumerate(questions_and_answers, start=1):
-                    if question and answer:
-                        questionnaire_results = yield ph.render_page(
-                            props.Translatable({"en": "", "nl": ""}), 
-                            generate_questionnaire(question, answer, index)
-                        )
-                        
-                        if questionnaire_results.__type__ == "PayloadJSON":
-                            yield ph.donate(
-                                f"{self.session_id}-questionnaire-{index}-donation", 
-                                questionnaire_results.value
+            if not is_decline:
+                donated_data = json.loads(reviewed_data)[0]["chatgpt_conversations"]
+                if len(donated_data) > 0:
+                    questions_and_answers = select_three_qas(donated_data)
+                    for index, (question, answer) in enumerate(questions_and_answers, start=1):
+                        if question and answer:
+                            questionnaire_results = yield ph.render_page(
+                                props.Translatable({"en": "", "nl": ""}), 
+                                generate_questionnaire(question, answer, index)
                             )
+                            
+                            if questionnaire_results.__type__ == "PayloadJSON":
+                                yield ph.donate(
+                                    f"{self.session_id}-questionnaire-{index}-donation", 
+                                    questionnaire_results.value
+                                )
 
         yield from ph.emit_log("info", f"[{self.platform_name}] Donation result: success")
 
