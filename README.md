@@ -3,6 +3,7 @@ it contains all unique elements from that study
 
 New in this study:
 - A rudimentary pre-donation redaction of email, phone and postal code. Check out `test_redact` to see what the redactions cover
+- conversations are now split over multiple files, also change upstream
 
 # The data donation task
 
