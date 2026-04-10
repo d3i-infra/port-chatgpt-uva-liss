@@ -10,6 +10,7 @@ import logging
 from collections import Counter
 
 import pandas as pd
+import re
 
 import port.api.props as props
 import port.api.d3i_props as d3i_props
@@ -45,58 +46,74 @@ DDP_CATEGORIES = [
 ]
 
 
-def conversations_to_df(reader: ZipArchiveReader, errors: Counter)  -> pd.DataFrame:
-    result = reader.json("conversations.json")
-    if not result.found:
-        return pd.DataFrame()
-    conversations = result.data
-
+def conversations_to_df(reader: ZipArchiveReader, errors: Counter) -> pd.DataFrame:
     datapoints = []
-    out = pd.DataFrame()
+
+    # 1. Collect all matching files BEFORE calling reader.json
+    conversation_files = [
+        m for m in reader.archive_members
+        if re.search(r"(?:^|/)conversations.*\.json$", m)
+    ]
 
     try:
-        for conversation in conversations:
-            title = conversation["title"]
-            conversation_id = conversation["conversation_id"]
-            first_question = None
-            first_answer = None
-            for _, turn in conversation["mapping"].items():
+        for member in conversation_files:
+            result = reader.json(member)
+            if not result.found:
+                continue
 
-                denested_d = eh.dict_denester(turn)
-                is_hidden = eh.find_item(denested_d, "is_visually_hidden_from_conversation")
-                content_type = eh.find_item(denested_d, "content_type")
-                role = eh.find_item(denested_d, "role")
-                if (content_type != "text") or (is_hidden == "True") or (role not in ["user", "assistant"]):
-                    continue
-                message = "".join(eh.find_items(denested_d, "part"))
-                # In some cases, an assistant's response is empty
-                if (role == "assistant") and (not message):
-                    continue
-                model = eh.find_item(denested_d, "-model_slug")
-                time = eh.epoch_to_iso(eh.find_item(denested_d, "create_time"))
-                # Is first question or answer?
-                id = eh.find_item(denested_d, "id")
-                if (role == "user") and (not first_question):
-                    first_question = id
-                elif (role == "assistant") and (not first_answer):
-                    first_answer = id
-                datapoint = {
-                    "conversation title": title,
-                    "role": role,
-                    "message": redact.redact(message),
-                    "model": model,
-                    "time": time,
-                    "conversation_id": conversation_id,
-                    "is_first": True if ((first_question == id) or (first_answer == id)) else False  # Label first qa pair
-                }
-                datapoints.append(datapoint)
+            conversations = result.data
 
-        out = pd.DataFrame(datapoints)
+            for conversation in conversations:
+                title = conversation.get("title", "")
+                conversation_id = conversation.get("conversation_id", "")
+                first_question = None
+                first_answer = None
+
+                for _, turn in conversation.get("mapping", {}).items():
+                    denested_d = eh.dict_denester(turn)
+
+                    is_hidden = eh.find_item(denested_d, "is_visually_hidden_from_conversation")
+                    content_type = eh.find_item(denested_d, "content_type")
+                    role = eh.find_item(denested_d, "role")
+
+                    if (content_type != "text") or (is_hidden == "True") or (role not in ["user", "assistant"]):
+                        continue
+
+                    message = "".join(eh.find_items(denested_d, "part"))
+
+                    # Skip empty assistant responses
+                    if (role == "assistant") and (not message):
+                        continue
+
+                    model = eh.find_item(denested_d, "-model_slug")
+                    time = eh.epoch_to_iso(
+                        eh.find_item(denested_d, "create_time"),
+                        errors=errors
+                    )
+
+                    # Identify first Q/A
+                    id_ = eh.find_item(denested_d, "id")
+                    if (role == "user") and (not first_question):
+                        first_question = id_
+                    elif (role == "assistant") and (not first_answer):
+                        first_answer = id_
+
+                    datapoints.append({
+                        "conversation title": title,
+                        "role": role,
+                        "message": redact.redact(message),
+                        "model": model,
+                        "time": time,
+                        "conversation_id": conversation_id,
+                        "is_first": (id_ == first_question) or (id_ == first_answer),
+                    })
+
+        return pd.DataFrame(datapoints)
 
     except Exception as e:
         logger.error("Data extraction error: %s", e)
-        
-    return out
+        errors[type(e).__name__] += 1
+        return pd.DataFrame()
 
 
 def extraction(chatgpt_zip: str, validation) -> ExtractionResult:
