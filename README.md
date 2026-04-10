@@ -1,6 +1,9 @@
 This data donation flow is an implementation of GabrieleBossi/vidi-port-chatgpt
 it contains all unique elements from that study
 
+New in this study:
+- A rudimentary pre-donation redaction of email, phone and postal code. Check out `test_redact` to see what the redactions cover
+
 # The data donation task
 
 The data donation task (a fork of [Feldspar](https://github.com/eyra/feldspar)) is a front end that guides participants through the data donation steps, used in conjunction with Next.
