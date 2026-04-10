@@ -25,7 +25,7 @@
     "postcss": "^8.5.4",
     "react-highlight-words": "^0.21.0",
     "recharts": "^2.15.2",
-    "tailwindcss": "^4.2.1",
+    "tailwindcss": "^4.2.2",
     "typescript": "^5.9.2",
     "vite": "^7.0.0",
     "zod": "^4.3.6"
