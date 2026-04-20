@@ -2,8 +2,9 @@ This data donation flow is an implementation of GabrieleBossi/vidi-port-chatgpt
 it contains all unique elements from that study
 
 New in this study:
+- Questionnaire is removed
 - A rudimentary pre-donation redaction of email, phone and postal code. Check out `test_redact` to see what the redactions cover
-- conversations are now split over multiple files, also change upstream
+- Conversations are now split over multiple files
 
 # The data donation task
 
